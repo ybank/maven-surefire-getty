@@ -1,5 +1,7 @@
 package org.apache.maven.surefire.junit;
 
+import java.util.List;
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -31,6 +33,7 @@ import org.apache.maven.surefire.report.RunListener;
 import org.apache.maven.surefire.report.SimpleReportEntry;
 import org.apache.maven.surefire.suite.RunResult;
 import org.apache.maven.surefire.testset.TestSetFailedException;
+import org.apache.maven.surefire.util.DefaultScanResult;
 import org.apache.maven.surefire.util.ReflectionUtils;
 import org.apache.maven.surefire.util.RunOrderCalculator;
 import org.apache.maven.surefire.util.ScanResult;
@@ -67,54 +70,31 @@ public class JUnit3Provider
         reflector = new JUnit3Reflector( testClassLoader );
         jUnit3TestChecker = new JUnit3TestChecker( testClassLoader );
         testChecker = new PojoAndJUnit3Checker( jUnit3TestChecker ); // Todo; use reflector
+        
+        /**
+         * Step 1 - output for getty use the runner and all test classes
+         */
+        List<String> allTestFiles = ((DefaultScanResult) scanResult).getFiles();
+        String interested_output = "__for__getty__ junit.textui.TestRunner";  // prefix length = 15
+		for (String testClass :  allTestFiles)
+			interested_output += (" " + testClass);
+		System.out.println(interested_output);
+		
     }
 
     public RunResult invoke( Object forkTestSet )
         throws TestSetFailedException
     {
-        if ( testsToRun == null )
-        {
-            if ( forkTestSet instanceof TestsToRun )
-            {
-                testsToRun = (TestsToRun) forkTestSet;
-            }
-            else if ( forkTestSet instanceof Class )
-            {
-                testsToRun = TestsToRun.fromClass( (Class<?>) forkTestSet );
-            }
-            else
-            {
-                testsToRun = scanClassPath();
-            }
-        }
-
-        ReporterFactory reporterFactory = providerParameters.getReporterFactory();
-        RunResult runResult;
-        try
-        {
-            final RunListener reporter = reporterFactory.createReporter();
-            ConsoleOutputCapture.startCapture( (ConsoleOutputReceiver) reporter );
-
-            final String smClassName = System.getProperty( "surefire.security.manager" );
-            if ( smClassName != null )
-            {
-                SecurityManager securityManager =
-                    ReflectionUtils.instantiate( getClass().getClassLoader(), smClassName, SecurityManager.class );
-                System.setSecurityManager( securityManager );
-            }
-
-            for ( Class<?> clazz : testsToRun )
-            {
-                SurefireTestSet surefireTestSet = createTestSet( clazz );
-                executeTestSet( surefireTestSet, reporter, testClassLoader );
-            }
-
-        }
-        finally
-        {
-            runResult = reporterFactory.close();
-        }
-        return runResult;
+    	/**
+    	 * Step 2 - stop running any tests and quit gracefully
+    	 */
+    	System.out.println("In JUnit3 provider, with all test classes installed successfully. ");
+    	System.out.println("\tQuit JUnit3 provider without running any tests.");
+		return new RunResult(0,0,0,0) {
+			public boolean isFailure() {
+				return false;
+			}
+		};
     }
 
     private SurefireTestSet createTestSet( Class<?> clazz )

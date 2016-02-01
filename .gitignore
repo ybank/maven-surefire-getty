@@ -12,3 +12,12 @@ build
 .surefire-*
 .DS_Store
 *.versionsBackup
+
+surefire-providers/surefire-junit3/.externalToolBuilders/
+surefire-providers/surefire-junit3/maven-eclipse.xml
+surefire-providers/surefire-junit4/.externalToolBuilders/
+surefire-providers/surefire-junit4/maven-eclipse.xml
+surefire-providers/surefire-junit47/.externalToolBuilders/
+surefire-providers/surefire-junit47/maven-eclipse.xml
+surefire-providers/surefire-testng/.externalToolBuilders/
+surefire-providers/surefire-testng/maven-eclipse.xml

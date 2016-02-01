@@ -35,6 +35,7 @@ import org.apache.maven.surefire.report.ReporterFactory;
 import org.apache.maven.surefire.suite.RunResult;
 import org.apache.maven.surefire.testset.TestListResolver;
 import org.apache.maven.surefire.testset.TestSetFailedException;
+import org.apache.maven.surefire.util.DefaultScanResult;
 import org.apache.maven.surefire.util.RunOrderCalculator;
 import org.apache.maven.surefire.util.ScanResult;
 import org.apache.maven.surefire.util.ScannerFilter;
@@ -105,6 +106,16 @@ public class JUnitCoreProvider
         String listeners = bootParams.getProviderProperties().get( "listener" );
         customRunListeners = unmodifiableCollection( createCustomListeners( listeners ) );
         jUnit48Reflector = new JUnit48Reflector( testClassLoader );
+        
+        /**
+         * Step 1 - output for getty use the runner and all test classes
+         */
+        List<String> allTestFiles = ((DefaultScanResult) scanResult).getFiles();
+        String interested_output = "__for__getty__ org.junit.runner.JUnitCore";  // prefix length = 15
+		for (String testClass :  allTestFiles)
+			interested_output += (" " + testClass);
+		System.out.println(interested_output);
+        
     }
 
     public Iterable<Class<?>> getSuites()
@@ -121,69 +132,16 @@ public class JUnitCoreProvider
     public RunResult invoke( Object forkTestSet )
         throws TestSetFailedException
     {
-        final ReporterFactory reporterFactory = providerParameters.getReporterFactory();
-
-        final RunResult runResult;
-
-        final ConsoleLogger consoleLogger = providerParameters.getConsoleLogger();
-
-        Filter filter = jUnit48Reflector.isJUnit48Available() ? createJUnit48Filter() : null;
-
-        Notifier notifier =
-            new Notifier( createRunListener( reporterFactory, consoleLogger ), getSkipAfterFailureCount() );
-        // startCapture() called in createRunListener() in prior to setTestsToRun()
-
-        if ( testsToRun == null )
-        {
-            setTestsToRun( forkTestSet );
-        }
-
-        // Add test failure listener
-        JUnitTestFailureListener testFailureListener = new JUnitTestFailureListener();
-        notifier.addListener( testFailureListener );
-
-        if ( isFailFast() && commandsReader != null )
-        {
-            registerPleaseStopJUnitListener( notifier );
-        }
-
-        try
-        {
-            JUnitCoreWrapper core = new JUnitCoreWrapper( notifier, jUnitCoreParameters, consoleLogger );
-
-            if ( commandsReader != null )
-            {
-                registerShutdownListener( testsToRun );
-                commandsReader.awaitStarted();
-            }
-
-            notifier.asFailFast( isFailFast() );
-            core.execute( testsToRun, customRunListeners, filter );
-            notifier.asFailFast( false );
-
-            // Rerun failing tests if rerunFailingTestsCount is larger than 0
-            if ( isRerunFailingTests() )
-            {
-                Notifier rerunNotifier = pureNotifier();
-                notifier.copyListenersTo( rerunNotifier );
-                JUnitCoreWrapper rerunCore = new JUnitCoreWrapper( rerunNotifier, jUnitCoreParameters, consoleLogger );
-                for ( int i = 0; i < rerunFailingTestsCount && !testFailureListener.getAllFailures().isEmpty(); i++ )
-                {
-                    List<Failure> failures = testFailureListener.getAllFailures();
-                    Map<Class<?>, Set<String>> failingTests = generateFailingTests( failures, testClassLoader );
-                    testFailureListener.reset();
-                    FilterFactory filterFactory = new FilterFactory( testClassLoader );
-                    Filter failingMethodsFilter = filterFactory.createFailingMethodFilter( failingTests );
-                    rerunCore.execute( testsToRun, failingMethodsFilter );
-                }
-            }
-        }
-        finally
-        {
-            runResult = reporterFactory.close();
-            notifier.removeListeners();
-        }
-        return runResult;
+    	/**
+    	 * Step 2 - stop running any tests and quit gracefully
+    	 */
+    	System.out.println("In JUnit47 provider, with all test classes installed successfully. ");
+    	System.out.println("\tQuit JUnit47 provider without running any tests.");
+		return new RunResult(0,0,0,0) {
+			public boolean isFailure() {
+				return false;
+			}
+		};
     }
 
     private void setTestsToRun( Object forkTestSet )

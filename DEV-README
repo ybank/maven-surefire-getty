@@ -1,0 +1,3 @@
+To install:
+
+mvn install -DskipTests -Drat.skip=true -Dcheckstyle.skip=true -Dmaven.plugin.skip=true

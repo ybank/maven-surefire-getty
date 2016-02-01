@@ -39,6 +39,7 @@ import org.apache.maven.surefire.suite.RunResult;
 import org.apache.maven.surefire.testset.TestListResolver;
 import org.apache.maven.surefire.testset.TestRequest;
 import org.apache.maven.surefire.testset.TestSetFailedException;
+import org.apache.maven.surefire.util.DefaultScanResult;
 import org.apache.maven.surefire.util.RunOrderCalculator;
 import org.apache.maven.surefire.util.ScanResult;
 import org.apache.maven.surefire.util.TestsToRun;
@@ -51,6 +52,7 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runner.notification.StoppedByUserException;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import static java.lang.reflect.Modifier.isAbstract;
@@ -112,67 +114,31 @@ public class JUnit4Provider
         TestRequest testRequest = bootParams.getTestRequest();
         testResolver = testRequest.getTestListResolver();
         rerunFailingTestsCount = testRequest.getRerunFailingTestsCount();
+        
+        /**
+         * Step 1 - output for getty use the runner and all test classes
+         */
+        List<String> allTestFiles = ((DefaultScanResult) scanResult).getFiles();
+        String interested_output = "__for__getty__ org.junit.runner.JUnitCore";  // prefix length = 15
+		for (String testClass :  allTestFiles)
+			interested_output += (" " + testClass);
+		System.out.println(interested_output);
+		
     }
 
     public RunResult invoke( Object forkTestSet )
         throws TestSetFailedException
     {
-        upgradeCheck();
-
-        ReporterFactory reporterFactory = providerParameters.getReporterFactory();
-
-        RunResult runResult;
-        try
-        {
-            RunListener reporter = reporterFactory.createReporter();
-
-            startCapture( (ConsoleOutputReceiver) reporter );
-            // startCapture() called in prior to setTestsToRun()
-
-            if ( testsToRun == null )
-            {
-                setTestsToRun( forkTestSet );
-            }
-
-            Notifier notifier = new Notifier( new JUnit4RunListener( reporter ), getSkipAfterFailureCount() );
-            Result result = new Result();
-            notifier.addListeners( customRunListeners )
-                .addListener( result.createListener() );
-
-            if ( isFailFast() && commandsReader != null )
-            {
-                registerPleaseStopJUnitListener( notifier );
-            }
-
-            try
-            {
-                notifier.fireTestRunStarted( testsToRun.allowEagerReading()
-                                                 ? createTestsDescription( testsToRun )
-                                                 : createDescription( UNDETERMINED_TESTS_DESCRIPTION ) );
-
-                if ( commandsReader != null )
-                {
-                    registerShutdownListener( testsToRun );
-                    commandsReader.awaitStarted();
-                }
-
-                for ( Class<?> testToRun : testsToRun )
-                {
-                    executeTestSet( testToRun, reporter, notifier );
-                }
-            }
-            finally
-            {
-                notifier.fireTestRunFinished( result );
-                notifier.removeListeners();
-            }
-            rethrowAnyTestMechanismFailures( result );
-        }
-        finally
-        {
-            runResult = reporterFactory.close();
-        }
-        return runResult;
+    	/**
+    	 * Step 2 - stop running any tests and quit gracefully
+    	 */
+    	System.out.println("In JUnit4 provider, with all test classes installed successfully. ");
+    	System.out.println("\tQuit JUnit4 provider without running any tests.");
+		return new RunResult(0,0,0,0) {
+			public boolean isFailure() {
+				return false;
+			}
+		};
     }
 
     private void setTestsToRun( Object forkTestSet )
