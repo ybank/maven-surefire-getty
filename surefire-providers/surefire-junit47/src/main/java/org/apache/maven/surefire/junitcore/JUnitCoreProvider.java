@@ -111,7 +111,7 @@ public class JUnitCoreProvider
          * Step 1 - output for getty use the runner and all test classes
          */
         List<String> allTestFiles = ((DefaultScanResult) scanResult).getFiles();
-        String interested_output = "__for__getty__ org.junit.runner.JUnitCore";  // prefix length = 15
+        String interested_output = "__for__getty__ __junit4__ org.junit.runner.JUnitCore";  // prefix length = 15
 		for (String testClass :  allTestFiles)
 			interested_output += (" " + testClass);
 		System.out.println(interested_output);
