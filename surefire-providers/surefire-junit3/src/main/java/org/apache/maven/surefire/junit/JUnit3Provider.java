@@ -75,7 +75,9 @@ public class JUnit3Provider
          * Step 1 - output for getty use the runner and all test classes
          */
         List<String> allTestFiles = ((DefaultScanResult) scanResult).getFiles();
-        String interested_output = "__for__getty__ __junit3__ junit.textui.TestRunner";  // prefix length = 15
+//        String interested_output = "__for__getty__ __junit3__ junit.textui.TestRunner";  // prefix length = 15
+        // As long as JUnit4 is on the patch, such facade will work for JUnit3 test cases
+        String interested_output = "__for__getty__ __junit4__ org.junit.runner.JUnitCore";  // prefix length = 15
 		for (String testClass :  allTestFiles)
 			interested_output += (" " + testClass);
 		System.out.println(interested_output);
